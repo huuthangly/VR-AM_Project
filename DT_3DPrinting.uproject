@@ -10,8 +10,7 @@
 			"SupportedTargetPlatforms": [
 				"Win64",
 				"Linux",
-				"Android",
-				"VisionOS"
+				"Android"
 			]
 		},
 		{
@@ -29,9 +28,13 @@
 			"SupportedTargetPlatforms": [
 				"Win64",
 				"Linux",
-				"Android",
-				"VisionOS"
+				"Android"
 			]
+		},
+		{
+			"Name": "PythonBlueprintFixer",
+			"Enabled": true,
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/10e33e5cfb3e41bd93443fd3442708d7"
 		}
 	],
 	"TargetPlatforms": [
