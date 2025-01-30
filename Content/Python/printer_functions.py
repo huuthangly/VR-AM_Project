@@ -13,7 +13,11 @@ class PrinterFunctions(unreal.BlueprintFunctionLibrary):
         Thread(target=executeTerminal, args=(f"python3 C:\\Users\\Alien\\ankermake-m5-protocol\\ankerctl.py pppp print-file {FilePath}", )).start()
         return True
     
-
+    @unreal.ufunction(static = True, ret = bool)
+    def UpdateIP():
+        Thread(target=executeTerminal, args=(f"python3 C:\\Users\\Alien\\ankermake-m5-protocol\\ankerctl.py pppp lan-search -s", )).start()
+        return True
+    
 
 
 
