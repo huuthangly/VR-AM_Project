@@ -32,11 +32,9 @@
 			]
 		},
 		{
-			"Name": "Postshot",
+			"Name": "PythonBlueprintFixer",
 			"Enabled": true,
-			"SupportedTargetPlatforms": [
-				"Win64"
-			]
+			"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/10e33e5cfb3e41bd93443fd3442708d7"
 		}
 	],
 	"TargetPlatforms": [
