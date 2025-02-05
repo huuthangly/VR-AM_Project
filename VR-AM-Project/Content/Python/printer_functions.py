@@ -12,7 +12,6 @@ def executeTerminal(command):
 parsed_entries = {}
 buffered_lines = []
 extracted_data = []
-monitor_process = None
 
 def parse_console_output(process):
     global parsed_entries, buffered_lines, extracted_data
@@ -91,7 +90,6 @@ def start_subprocess():
     )
 
 def monitor_and_collect_data():
-    """Runs the subprocess, extracts data, and returns it."""
     executeTerminal(f"python3 C:\\Users\\Alien\\ankermake-m5-protocol\\ankerctl.py pppp lan-search -s") #update IP
     global process
     process = start_subprocess()
@@ -109,8 +107,7 @@ class PrinterFunctions(unreal.BlueprintFunctionLibrary):
     
     @unreal.ufunction(static=True, params=[], ret=bool)
     def MonitorPrinting():
-        collection_thread = Thread(target=monitor_and_collect_data)
-        collection_thread.start()
+        Thread(target=monitor_and_collect_data).start()
         return True
 
     @unreal.ufunction(static=True, params=[], ret=bool)
@@ -120,7 +117,8 @@ class PrinterFunctions(unreal.BlueprintFunctionLibrary):
         except:
             pass
         return True
-    #Current temps
+
+    #Get Current temps
     @unreal.ufunction(static=True, params=[], ret=int)
     def GetNozzoleTemp():
         return extracted_data[3]
@@ -129,7 +127,7 @@ class PrinterFunctions(unreal.BlueprintFunctionLibrary):
     def GetHotbedTemp():
         return extracted_data[5]
 
-    #Target temps
+    #Get Target temps
     @unreal.ufunction(static=True, params=[], ret=int)
     def GetTargetNozzoleTemp():
         return extracted_data[4]
@@ -138,7 +136,7 @@ class PrinterFunctions(unreal.BlueprintFunctionLibrary):
     def GetTargetHotbedTemp():
         return extracted_data[6]
 
-    #Times
+    #Get Times
     @unreal.ufunction(static=True, params=[], ret=int)
     def GetTimeValue():
         return extracted_data[0]
