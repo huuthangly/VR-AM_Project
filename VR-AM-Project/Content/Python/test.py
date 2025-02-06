@@ -3,7 +3,6 @@ from threading import Thread
 import re
 import json
 import time
-import unreal
 import os
 
 parsed_entries = {}
@@ -15,9 +14,10 @@ def parse_console_output(process):
         line = line.strip()
         if not line:
             continue
-
+        
         buffered_lines.append(line)
         combined_data = " ".join(buffered_lines)
+        print("New Line")
 
         try:
             # Structured entry like [1001] print_schedule {...}
@@ -44,6 +44,7 @@ def parse_console_output(process):
                 data = json.loads(combined_data.replace("'", "\""))
                 parsed_entries["unstructured"] = {"label": None, "data": data}
                 buffered_lines.clear()
+
         except Exception:
             pass
 
@@ -52,7 +53,8 @@ def start_subprocess():
     return subprocess.Popen(
         ["python3", "C:\\Users\\Alien\\ankermake-m5-protocol\\ankerctl.py", "mqtt", "monitor"],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        #stderr=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         text=True,
         bufsize=1
     )
@@ -87,6 +89,7 @@ def extract_data(parsed_entries):
             print_speed_val = int(data.get("value", 0))
             extracted_data.append(print_speed_val)
 
+    ##print("Extracted Data:", extracted_data)
     return extracted_data
 
 def monitor_and_collect_data():
@@ -100,27 +103,15 @@ def monitor_and_collect_data():
     try:
         while process.poll() is None:
             collected_data = extract_data(parsed_entries)
+            print("Process is running")
+            print(collected_data)
             time.sleep(1)
+        print("Process is not running")
     except KeyboardInterrupt:
         print("Stopping monitoring...")
 
     print("Subprocess finished!")
-    return collected_data
 
-
-@unreal.uclass()
-class PrinterFunctions(unreal.BlueprintFunctionLibrary):
-
-    @unreal.ufunction(static=True, params=[], ret=[int])
-    def MonitorPrinting():
-        result_data = []
-
-        def collect_data():
-            nonlocal result_data
-            result_data = monitor_and_collect_data()
-
-        # Start the thread to collect data
-        collection_thread = Thread(target=collect_data)
-        collection_thread.start()
-        return result_data
+monitor_and_collect_data()
+    
 

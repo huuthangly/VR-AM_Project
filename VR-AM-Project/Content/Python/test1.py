@@ -3,7 +3,6 @@ from threading import Thread
 import re
 import json
 import time
-import unreal
 import os
 
 parsed_entries = {}
@@ -17,12 +16,10 @@ def executeTerminal(command):
 def parse_console_output(process):
     global parsed_entries, buffered_lines
     for line in iter(process.stdout.readline, ''):
-        
         line = line.strip()
         if not line:
             continue
 
-        unreal.log(line)
         buffered_lines.append(line)
         combined_data = " ".join(buffered_lines)
 
@@ -51,8 +48,8 @@ def parse_console_output(process):
                 data = json.loads(combined_data.replace("'", "\""))
                 parsed_entries["unstructured"] = {"label": None, "data": data}
                 buffered_lines.clear()
-        except Exception as e:
-            unreal.log_warning(f"Exception in parse_console_output: {e}")
+        except Exception:
+            pass
    
 def parse_extracted_data():
     global parsed_entries, extracted_data
@@ -65,15 +62,8 @@ def parse_extracted_data():
             extracted_data[1] = int(data.get("totalTime", 0))
             extracted_data[2] = int(data.get("progress", 0) / 100) 
             # extracted_data.extend([time_val, total_time_val, progress_val])
-        else:
-            extracted_data[0] = 0
-            extracted_data[1] = 0
-            extracted_data[2] = 0
-
-    else:
-        extracted_data[0] = 0
-        extracted_data[1] = 0
-        extracted_data[2] = 0
+     #else:
+        # extracted_data.extend([0, 0, 0])
 
     # Nozzle and hotbed temperatures
     counter = 3
@@ -82,9 +72,9 @@ def parse_extracted_data():
             data = parsed_entries[key]["data"]
             if isinstance(data, dict):
                 extracted_data[counter] = int(data.get("currentTemp", 0) / 100) 
-                counter += 1
+                counter = counter + 1
                 extracted_data[counter] = int(data.get("targetTemp", 0) /100)
-                counter += 1
+                counter = counter + 1
                 # extracted_data.extend([current_temp, target_temp])
         # else:
            # extracted_data.extend([0, 0])
@@ -95,16 +85,14 @@ def parse_extracted_data():
         if isinstance(data, dict):
             extracted_data[7] = int(data.get("value", 0))
            # extracted_data.append(print_speed_val)
-        else:
-            extracted_data[7] = 0
-    else:
-        extracted_data[7] = 0
+    #else:
+        #extracted_data.extend([0])
     
 def start_subprocess():
     return subprocess.Popen(
         ["python3", "C:\\Users\\Alien\\ankermake-m5-protocol\\ankerctl.py", "mqtt", "monitor"],
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stderr=subprocess.PIPE,
         text=True,
         bufsize=1
     )
@@ -114,88 +102,12 @@ def monitor_and_collect_data():
     executeTerminal(f"python3 C:\\Users\\Alien\\ankermake-m5-protocol\\ankerctl.py pppp lan-search -s") #update IP
     global process
     process = start_subprocess()
-    thread = Thread(target=parse_console_output, args=(process,))
-    thread.start()
-    
+    parse_console_output(process)
     while process.poll() is None:
         parse_extracted_data()
-        unreal.log_warning("Process is Running")
+        unreal.log_warning("Hello 6")
         time.sleep(1)
-    
-    unreal.log_warning(f"Process is not Running, code: {process.poll()}")
 
-@unreal.uclass()
-class PrinterFunctions(unreal.BlueprintFunctionLibrary):
-
-    @unreal.ufunction(static = True, params = [str], ret = bool)
-    def PrintFile(FilePath):
-        Thread(target=executeTerminal, args=(f"python3 C:\\Users\\Alien\\ankermake-m5-protocol\\ankerctl.py pppp print-file {FilePath}", )).start()
-        return True
-    
-    @unreal.ufunction(static=True, params=[], ret=bool)
-    def MonitorPrinting():
-        Thread(target=monitor_and_collect_data).start()
-        return True
-
-    @unreal.ufunction(static=True, params=[], ret=bool)
-    def StopMonitor():
-        global process, parsed_entries, buffered_lines, extracted_data
-        try:
-            if process:
-                process.kill()
-
-            parsed_entries = {}
-            buffered_lines = []
-            extracted_data = [0, 0, 0, 0, 0, 0, 0, 0]
-            
-        except:
-            pass
-
-        return True
-    
-    #Current temps
-    @unreal.ufunction(static=True, params=[], ret=int)
-    def GetNozzoleTemp():
-        return extracted_data[3]
-
-    @unreal.ufunction(static=True, params=[], ret=int)
-    def GetHotbedTemp():
-        return extracted_data[5]
-
-    #Target temps
-    @unreal.ufunction(static=True, params=[], ret=int)
-    def GetTargetNozzoleTemp():
-        return extracted_data[4]
-
-    @unreal.ufunction(static=True, params=[], ret=int)
-    def GetTargetHotbedTemp():
-        return extracted_data[6]
-
-    #Times
-    @unreal.ufunction(static=True, params=[], ret=str)
-    def GetTimeValue():
-        seconds = extracted_data[0]
-        formatted_time = time.strftime("%H:%M:%S", time.gmtime(seconds))
-        return formatted_time
-
-    #Progress
-    @unreal.ufunction(static=True, params=[], ret=int)
-    def GetProgressValue():
-        return extracted_data[2]
-
-    #Progress
-    @unreal.ufunction(static=True, params=[], ret=int)
-    def GetSpeedValue():
-        return extracted_data[7]
-
-#time_val - 0
-#total_time_val - 1
-#progress_val - 2
-#current_temp_nozzle - 3
-#target_temp_nozzle b- 4
-#current_temp_hotbed - 5
-#target_temp_hotbed - 6
-
-
-
-
+def print_extracted_data():
+    """Prints the current contents of the extracted_data list."""
+    print("Extracted Data:", extracted_data)
