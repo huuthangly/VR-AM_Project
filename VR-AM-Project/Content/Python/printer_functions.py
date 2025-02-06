@@ -6,14 +6,13 @@ import time
 import unreal
 import os
 
-def executeTerminal(command):
-    os.system(command)
-
 parsed_entries = {}
 buffered_lines = []
 parsed_data = [0, 0, 0, 0, 0, 0, 0, 0]
 process = None
 
+def executeTerminal(command):
+    os.system(command)
 
 def parse_console_output(process):
     global parsed_entries, buffered_lines
@@ -25,33 +24,34 @@ def parse_console_output(process):
         buffered_lines.append(line)
         combined_data = " ".join(buffered_lines)
 
-        # Structured entry like [1001] print_schedule {...}
-        match = re.search(r"\[(\d+)\]\s+(\w+)\s+(.*)", combined_data)
-        if match:
-            key = int(match.group(1))
-            label = match.group(2)
-            data_str = match.group(3).strip()
+        try:
+            # Structured entry like [1001] print_schedule {...}
+            match = re.search(r"\[(\d+)\]\s+(\w+)\s+(.*)", combined_data)
+            if match:
+                key = int(match.group(1))
+                label = match.group(2)
+                data_str = match.group(3).strip()
 
-            try:
-                data = json.loads(data_str.replace("'", "\""))
-            except json.JSONDecodeError:
-                if data_str.endswith("}") and data_str.count("{") == data_str.count("}") :
-                    data = data_str
-                else:
-                    continue
+                try:
+                    data = json.loads(data_str.replace("'", "\""))
+                except json.JSONDecodeError:
+                    if data_str.endswith("}") and data_str.count("{") == data_str.count("}") :
+                        data = data_str
+                    else:
+                        continue
 
-            parsed_entries[key] = {"label": label, "data": data}
-            buffered_lines.clear()
-            continue
+                parsed_entries[key] = {"label": label, "data": data}
+                buffered_lines.clear()
+                continue
 
-        # Unstructured JSON fragments
-        if combined_data.startswith("{") and combined_data.endswith("}"):
-            data = json.loads(combined_data.replace("'", "\""))
-            parsed_entries["unstructured"] = {"label": None, "data": data}
-            buffered_lines.clear()
-        
+            # Unstructured JSON fragments
+            if combined_data.startswith("{") and combined_data.endswith("}"):
+                data = json.loads(combined_data.replace("'", "\""))
+                parsed_entries["unstructured"] = {"label": None, "data": data}
+                buffered_lines.clear()
+        except Exception:
+            pass
    
-
 def parse_extracted_data():
     global parsed_entries, parsed_data
     extracted_data = []
@@ -78,7 +78,6 @@ def parse_extracted_data():
         else:
             extracted_data.extend([0, 0])
 
-
     # Print speed extraction
     if 1006 in parsed_entries:
         data = parsed_entries[1006]["data"]
@@ -90,8 +89,6 @@ def parse_extracted_data():
     
     parsed_data = extracted_data
     
-
-
 def start_subprocess():
     return subprocess.Popen(
         ["python3", "C:\\Users\\Alien\\ankermake-m5-protocol\\ankerctl.py", "mqtt", "monitor"],
@@ -102,17 +99,12 @@ def start_subprocess():
     )
 
 def monitor_and_collect_data():
-    """Runs the subprocess, extracts data, and returns it."""
-    unreal.log_warning("Hello 1")
+    """Runs the subprocess and extracts data."""
     executeTerminal(f"python3 C:\\Users\\Alien\\ankermake-m5-protocol\\ankerctl.py pppp lan-search -s") #update IP
-    unreal.log_warning("Hello 2")
     global process
     process = start_subprocess()
-    unreal.log_warning("Hello 3")
-    while True:
-        unreal.log_warning("Hello 4")
-        parse_console_output(process)
-        unreal.log_warning("Hello 5")
+    parse_console_output(process)
+    while process.poll() is None:
         parse_extracted_data()
         unreal.log_warning("Hello 6")
         time.sleep(1)
@@ -127,9 +119,7 @@ class PrinterFunctions(unreal.BlueprintFunctionLibrary):
     
     @unreal.ufunction(static=True, params=[], ret=bool)
     def MonitorPrinting():
-        unreal.log_warning("Hello")
-        collection_thread = Thread(target=monitor_and_collect_data)
-        collection_thread.start()
+        Thread(target=monitor_and_collect_data).start()
         return True
 
     @unreal.ufunction(static=True, params=[], ret=bool)
