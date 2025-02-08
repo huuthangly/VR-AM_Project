@@ -16,8 +16,7 @@ def executeTerminal(command):
 
 def parse_console_output(process):
     global parsed_entries, buffered_lines
-    for line in iter(process.stdout.readline, ''):
-        
+    for line in iter(process.stdout.readline, ''):    
         line = line.strip()
         if not line:
             continue
@@ -64,16 +63,6 @@ def parse_extracted_data():
             extracted_data[0] = int(data.get("time", 0))
             extracted_data[1] = int(data.get("totalTime", 0))
             extracted_data[2] = int(data.get("progress", 0) / 100) 
-            # extracted_data.extend([time_val, total_time_val, progress_val])
-        else:
-            extracted_data[0] = 0
-            extracted_data[1] = 0
-            extracted_data[2] = 0
-
-    else:
-        extracted_data[0] = 0
-        extracted_data[1] = 0
-        extracted_data[2] = 0
 
     # Nozzle and hotbed temperatures
     counter = 3
@@ -85,20 +74,12 @@ def parse_extracted_data():
                 counter += 1
                 extracted_data[counter] = int(data.get("targetTemp", 0) /100)
                 counter += 1
-                # extracted_data.extend([current_temp, target_temp])
-        # else:
-           # extracted_data.extend([0, 0])
 
     # Print speed extraction
     if 1006 in parsed_entries:
         data = parsed_entries[1006]["data"]
         if isinstance(data, dict):
             extracted_data[7] = int(data.get("value", 0))
-           # extracted_data.append(print_speed_val)
-        else:
-            extracted_data[7] = 0
-    else:
-        extracted_data[7] = 0
     
 def start_subprocess():
     return subprocess.Popen(
@@ -147,12 +128,19 @@ class PrinterFunctions(unreal.BlueprintFunctionLibrary):
             parsed_entries = {}
             buffered_lines = []
             extracted_data = [0, 0, 0, 0, 0, 0, 0, 0]
-            
         except:
             pass
-
         return True
-    
+
+    #time_val - 0
+    #total_time_val - 1
+    #progress_val - 2
+    #current_temp_nozzle - 3
+    #target_temp_nozzle b- 4
+    #current_temp_hotbed - 5
+    #target_temp_hotbed - 6
+    #speed - 7
+
     #Current temps
     @unreal.ufunction(static=True, params=[], ret=int)
     def GetNozzoleTemp():
@@ -173,28 +161,30 @@ class PrinterFunctions(unreal.BlueprintFunctionLibrary):
 
     #Times
     @unreal.ufunction(static=True, params=[], ret=str)
-    def GetTimeValue():
+    def GetTimeInString():
         seconds = extracted_data[0]
         formatted_time = time.strftime("%H:%M:%S", time.gmtime(seconds))
         return formatted_time
 
+    @unreal.ufunction(static=True, params=[], ret=float)
+    def GetTimeValue():
+        return extracted_data[0]
+
     #Progress
     @unreal.ufunction(static=True, params=[], ret=int)
     def GetProgressValue():
+        if extracted_data[0] == 0: #Check if time remaining is 0
+            extracted_data[2] = 0   #Reset the progress
         return extracted_data[2]
 
     #Progress
     @unreal.ufunction(static=True, params=[], ret=int)
     def GetSpeedValue():
+        if extracted_data[0] == 0: #Check if time remaining is 0
+            extracted_data[7] = 0   #Reset the speed
         return extracted_data[7]
 
-#time_val - 0
-#total_time_val - 1
-#progress_val - 2
-#current_temp_nozzle - 3
-#target_temp_nozzle b- 4
-#current_temp_hotbed - 5
-#target_temp_hotbed - 6
+
 
 
 
