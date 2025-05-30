@@ -177,7 +177,7 @@ class PrinterFunctions(unreal.BlueprintFunctionLibrary):
             extracted_data[2] = 0   #Reset the progress
         return extracted_data[2]
 
-    #Progress
+    #Speed
     @unreal.ufunction(static=True, params=[], ret=int)
     def GetSpeedValue():
         if extracted_data[0] == 0: #Check if time remaining is 0
