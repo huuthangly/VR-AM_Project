@@ -11,7 +11,7 @@ def reading_data(file_name):
     global x, y, time
     x = df["x [mm]"].tolist()
     y = df["y [mm]"].tolist()
-    time = df["Time [s]"].tolist()
+    time = df["Time Step [s]"].tolist()
 
 
 @unreal.uclass()
@@ -35,6 +35,6 @@ class GetMovementData(unreal.BlueprintFunctionLibrary):
     @unreal.ufunction(static = True, params = [], ret = unreal.Array(float))
     def GetTime():
         global time
-        new_time = [round(num, 2) for num in time]
+        new_time = [round(num, 4) for num in time]
         return new_time
 
